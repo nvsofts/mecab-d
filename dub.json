@@ -1,0 +1,9 @@
+{
+  "name": "mecab-d",
+  "description": "MeCab D binding",
+  "authors": ["NV"],
+  "homepage": "https://github.com/nvsofts/mecab-d",
+  "license": "GPL-2.0 or LGPL-2.1 or BSD 3-clause",
+  "libs": ["mecab"],
+  "targetType": "executable"
+}
