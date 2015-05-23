@@ -9,8 +9,14 @@ import core.stdc.config;
 
 extern (C)
 {
-  alias mecab_t = void;
-  alias mecab_lattice_t = void;
+  enum mecab_t : void*
+  {
+    init = (void*).init
+  }
+  enum mecab_lattice_t : void*
+  {
+    init = (void*).init
+  }
 
   struct mecab_path_t
   {
@@ -31,8 +37,8 @@ extern (C)
     mecab_path_t* rpath;
     mecab_path_t* lpath;
 
-    const char* surface;
-    const char* feature;
+    const(char*) surface;
+    const(char*) feature;
 
     uint id;
     ushort length;
@@ -51,53 +57,58 @@ extern (C)
     c_long cost;
   }
 
-  mecab_t* mecab_new(int argc, char** argv);
-  mecab_t* mecab_new2(const char* arg);
-  void mecab_destroy(mecab_t* mecab);
+  mecab_t mecab_new(int argc, char** argv);
+  mecab_t mecab_new2(const(char*) arg);
+  void mecab_destroy(mecab_t mecab);
 
-  char* mecab_version();
+  const(char*) mecab_version();
 
-  char* mecab_strerror(mecab_t* mecab);
+  const(char*) mecab_strerror(mecab_t mecab);
 
-  int mecab_get_partial(mecab_t* mecab);
-  void mecab_set_partial(mecab_t* mecab, int partial);
+  int mecab_get_partial(mecab_t mecab);
+  void mecab_set_partial(mecab_t mecab, int partial);
 
-  float mecab_get_theta(mecab_t* mecab);
-  void mecab_set_theta(mecab_t* mecab, float theta);
+  float mecab_get_theta(mecab_t mecab);
+  void mecab_set_theta(mecab_t mecab, float theta);
 
-  int mecab_get_lattice_level(mecab_t* mecab);
-  void mecab_set_lattice_level(mecab_t* mecab, int level);
+  int mecab_get_lattice_level(mecab_t mecab);
+  void mecab_set_lattice_level(mecab_t mecab, int level);
 
-  int mecab_get_all_morphs(mecab_t* mecab);
-  void mecab_set_all_morphs(mecab_t* mecab, int all_morphs);
+  int mecab_get_all_morphs(mecab_t mecab);
+  void mecab_set_all_morphs(mecab_t mecab, int all_morphs);
 
-  int mecab_parse_lattice(mecab_t* mecab, mecab_lattice_t* lattice);
+  int mecab_parse_lattice(mecab_t mecab, mecab_lattice_t lattice);
 
-  char* mecab_sparse_tostr(mecab_t* mecab, const char* str);
-  char* mecab_sparse_tostr2(mecab_t* mecab, const char* str, size_t len);
-  char* mecab_sparse_tostr3(mecab_t* mecab, const char* str, size_t len, char* ostr, size_t olen);
+  const(char*) mecab_sparse_tostr(mecab_t mecab, const(char*) str);
+  const(char*) mecab_sparse_tostr2(mecab_t mecab, const(char*) str, size_t len);
+  const(char*) mecab_sparse_tostr3(mecab_t mecab, const(char*) str, size_t len, char* ostr, size_t olen);
 
-  mecab_node_t* mecab_sparse_tonode(mecab_t *mecab, const char* str);
+  const(mecab_node_t*) mecab_sparse_tonode(mecab_t mecab, const(char*) str);
 
   // lattice
-  mecab_lattice_t* mecab_lattice_new();
-  void mecab_lattice_destroy(mecab_lattice_t *lattice);
+  mecab_lattice_t mecab_lattice_new();
+  void mecab_lattice_destroy(mecab_lattice_t lattice);
 
-  void mecab_lattice_clear(mecab_lattice_t *lattice);
+  void mecab_lattice_clear(mecab_lattice_t lattice);
 }
 
 class Node
 {
-  private mecab_node_t* node;
+  private const(mecab_node_t*) node;
 
-  this(mecab_node_t* node)
+  this(const(mecab_node_t*) node)
   {
     this.node = node;
   }
 
-  @property mecab_node_t* ptr()
+  @property const(mecab_node_t*) ptr()
   {
     return this.node;
+  }
+
+  @property uint id()
+  {
+    return this.node.id;
   }
 
   @property string surface()
@@ -114,7 +125,7 @@ class Node
   {
     Node outer;
 
-    this(mecab_node_t* node)
+    this(const(mecab_node_t*) node)
     {
       if (node is null) {
         this.outer = null;
@@ -148,7 +159,7 @@ class Node
 
 class MeCab
 {
-  private mecab_t* mecab;
+  private mecab_t mecab;
 
   invariant
   {
@@ -160,13 +171,16 @@ class MeCab
     return to!string(mecab_version());
   }
 
-  this(int argc, string[] argv)
+  this()
   {
-    const(char)*[] _argv;
+    this("");
+  }
 
-    _argv = array(map!toStringz(argv));
+  this(string[] args)
+  {
+    auto _args = array(map!toStringz(args));
 
-    this.mecab = mecab_new(argc, cast(char**)_argv.ptr);
+    this.mecab = mecab_new(cast(int)_args.length, cast(char**)_args.ptr);
 
     if (this.mecab == null) {
       throw new Exception("Failed to initialize MeCab");
@@ -187,7 +201,7 @@ class MeCab
     mecab_destroy(this.mecab);
   }
 
-  @property mecab_t* ptr()
+  @property mecab_t ptr()
   {
     return this.mecab;
   }
@@ -263,7 +277,7 @@ class MeCab
 
 class Lattice
 {
-  private mecab_lattice_t* lattice;
+  private mecab_lattice_t lattice;
 
   invariant
   {
@@ -280,7 +294,7 @@ class Lattice
     mecab_lattice_destroy(this.lattice);
   }
 
-  @property mecab_lattice_t* ptr()
+  @property mecab_lattice_t ptr()
   {
     return this.lattice;
   }
@@ -294,7 +308,7 @@ class Lattice
 // for test
 void main(string[] args)
 {
-  MeCab mecab = new MeCab(cast(int)args.length, args);
+  MeCab mecab = new MeCab();
 
   foreach (n; mecab.sparseToNode("太郎は次郎が持っている本を花子に渡した。")) {
     writeln(n.surface);
